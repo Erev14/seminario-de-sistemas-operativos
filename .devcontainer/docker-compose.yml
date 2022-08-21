@@ -1,0 +1,64 @@
+version: '3.8'
+services:
+  xserver:
+    image: devrt/xserver
+    ipc: host
+    security_opt:
+    - seccomp:unconfined
+    ports:
+    - "3000:80"
+    healthcheck:
+      test: ["CMD-SHELL", "test -e /tmp/.X11-unix/X0"]
+      interval: "1s"
+      retries: 20
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # Update the VARIANT arg to pick a Java version: 11, 17
+        # Append -bullseye or -buster to pin to an OS version.
+        # Use the -bullseye variants on local arm64/Apple Silicon.
+        VARIANT: 17-bullseye
+        INSTALL_MAVEN: 'true'
+        INSTALL_GRADLE: 'false'
+        NODE_VERSION: lts/*
+        USER: vscode
+    volumes:
+      # - workspace:/workspace
+      - ..:/workspace:cached
+      # Docker volume to contain node_modules for performance reason
+      # - node_modules:/workspace/node_modules
+      # Docker
+      - ~/.docker:/root/.docker:z
+      # Docker socket to access Docker server
+      - /var/run/docker.sock:/var/run/docker.sock
+      # SSH directory for Linux, OSX and WSL
+      - ~/.ssh:/root/.ssh:z
+      # For Windows without WSL, a copy will be made
+      # from /tmp/.ssh to ~/.ssh to fix permissions
+      # - ~/.ssh:/tmp/.ssh:ro
+      # Shell history persistence
+      - ~/.zsh_history:/root/.zsh_history:z
+      # Git config
+      - ~/.gitconfig:/root/.gitconfig:z
+      # Kubernetes
+      # - ~/.kube:/root/.kube:z
+
+      # Overrides default command so things don't shut down after the process ends.
+    # env_file:
+    #   - .env
+    ipc: host
+    security_opt:
+    - seccomp:unconfined
+    environment:
+    - DISPLAY=:0
+    volumes_from:
+    - xserver
+    depends_on:
+    - xserver
+    command: sleep infinity
+    user: vscode
+
+volumes:
+  app:
