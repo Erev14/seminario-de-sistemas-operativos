@@ -3,14 +3,12 @@ package com.cucei;
 public class Process {
     private int id;
     private String name;
-    private int process_time;
+    private int processTime;
 
-    Process(int id, String name, int process_time){
-        int max_time = 4;
-        int min_time = 1;
+    Process(int id, String name, int processTime){
         this.id = id;
         this.name = name;
-        this.process_time = process_time;
+        this.processTime = processTime;
     }
 
     public int getId() {
@@ -21,8 +19,8 @@ public class Process {
         return name;
     }
 
-    public int getProcess_time() {
-        return process_time;
+    public int getProcessTime() {
+        return processTime;
     }
 
 }

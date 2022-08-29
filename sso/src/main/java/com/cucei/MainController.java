@@ -1,9 +1,9 @@
 package com.cucei;
 
 import java.util.LinkedList;
+import java.util.Random;
 
-import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.SimpleDoubleProperty;
+import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
@@ -14,14 +14,15 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
 public class MainController {
-    private static final LinkedList<Process> process_queue = new LinkedList<Process>();
+    private static final LinkedList<Process> process_queue = new LinkedList<>();
 
-    private boolean working;
+    Random r = new Random();
+
     @FXML
     private TextField newProcessTextInput;
 
     @FXML
-    private ListView<String> processListView = new ListView<String>();
+    private ListView<String> processListView = new ListView<>();
 
     @FXML
     private VBox processProcessingVBox;
@@ -40,48 +41,47 @@ public class MainController {
     }
     
     @FXML
-    private void startBatch() throws InterruptedException{
-        while(process_queue.size() > 0){
-            if(working) continue;
-            System.out.println("New process running");
-            // delete first element from the queue to be processed
-            Process to_process = process_queue.remove();
-            
-            // get progress bar reference
-            ProgressBar process_progressbar = getProgressBar(String.valueOf(to_process.getId()));
+    private void startBatch(){
+        // start new tread to avoid block main javafx thread
+        // to update the progress bar
+        new Thread(){
+            @Override
+            public void run() {
+                while(!process_queue.isEmpty()){
+                    // delete first element from the queue to be processed
+                    Process toProcess = process_queue.remove();
+                    // get progress bar reference
+                    ProgressBar processProgressbar = getProgressBar(String.valueOf(toProcess.getId()));
 
-            // create task (needed to use progress property to update the progress bar)
-            Task task = taskCreator(to_process.getProcess_time());
-            process_progressbar.progressProperty().unbind();
-            process_progressbar.progressProperty().bind(task.progressProperty());
-
-            // create the thread, and start the task 
-            // (if not will enter in a undertemined progress property, negative o not valid value)
-            // Thread dummy_task = new Thread(task);
-            // dummy_task.start();
-            working = true;
-            System.out.println("working...");
-            new Thread(task).start();
-        }
+                    for (double i = 0.0; i < toProcess.getProcessTime(); i++){
+                        final double step = i + 1;
+                        Platform.runLater(() -> processProgressbar.setProgress( (double) step / toProcess.getProcessTime() ));                        
+                        try {
+                            Thread.sleep(1000); 
+                        } catch(InterruptedException ex) {
+                            Thread.currentThread().interrupt();
+                        }
+                    }
+                }
+            }
+        }.start();
     }
 
     @FXML
     private void startMultiProcess() {
-        while(process_queue.size() > 0){
+        while(!process_queue.isEmpty()){
             // delete first element from the queue to be processed
-            Process to_process = process_queue.remove();
+            Process toProcess = process_queue.remove();
             
             // get progress bar reference
-            ProgressBar process_progressbar = getProgressBar(String.valueOf(to_process.getId()));
+            ProgressBar processProgressbar = getProgressBar(String.valueOf(toProcess.getId()));
 
             // create task (needed to use progress property to update the progress bar)
-            Task task = taskCreator(to_process.getProcess_time());
-            process_progressbar.progressProperty().unbind();
-            process_progressbar.progressProperty().bind(task.progressProperty());
+            Task task = taskCreator(toProcess.getProcessTime());
+            processProgressbar.progressProperty().unbind();
+            processProgressbar.progressProperty().bind(task.progressProperty());
             // create the thread, and start the task 
             // (if not will enter in a undertemined progress property, negative o not valid value)
-            // Thread dummy_task = new Thread(task);
-            // dummy_task.start();
             new Thread(task).start();
         }
     }
@@ -92,13 +92,9 @@ public class MainController {
             @Override
             protected Object call() throws Exception {
                 for(int i=0; i<seconds;i++){
-                    System.out.println("updating...");
                     Thread.sleep(1000);
                     updateProgress(i+1, seconds);
                 }
-                System.out.println("finish update");
-                working = false;
-                System.out.println("No more working");
                 return true;
             }
         };
@@ -106,23 +102,23 @@ public class MainController {
 
     private Process generateFakeProcess() {
         // generate data fake
-        int max_time = 10;
-        int min_time = 1;
+        int maxTime = 10;
+        int minTime = 1;
         int id = process_queue.size() + 1;
         String name = newProcessTextInput.getText();
-        int time = (int) (Math.random() * (max_time - min_time + 1) + min_time);
+        int time = minTime + r.nextInt(maxTime);
         return new Process(id, name, time);
     }
 
-    private void createNewProcessToProcess(String process_name, int process_id) {
-        Label process_name_label = new Label(process_name);
+    private void createNewProcessToProcess(String processName, int processId) {
+        Label processNameLabel = new Label(processName);
         
-        ProgressBar process_progressbar = new ProgressBar(0.0); // value is form 0 to 1
-        process_progressbar.setPrefWidth(350.0);
-        process_progressbar.setId("progressbar" + String.valueOf(process_id));
+        ProgressBar processProgressbar = new ProgressBar(0.0); // value is form 0 to 1
+        processProgressbar.setPrefWidth(350.0);
+        processProgressbar.setId("progressbar" + processId);
         
-        HBox hbox = new HBox(30, process_name_label, process_progressbar);
-        hbox.setId("hbox" + String.valueOf(process_id));
+        HBox hbox = new HBox(30, processNameLabel, processProgressbar);
+        hbox.setId("hbox" + processId);
         
         processProcessingVBox.getChildren().add(hbox);
     }
@@ -132,7 +128,7 @@ public class MainController {
     }
 
     private void clear() {
-        if(process_queue.size() == 0){
+        if(process_queue.isEmpty()){
             processListView.getItems().clear();
             processProcessingVBox.getChildren().clear();
         }
