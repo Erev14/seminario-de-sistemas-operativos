@@ -2,6 +2,7 @@ package com.cucei;
 
 import java.util.LinkedList;
 
+import javafx.application.Platform;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.concurrent.Task;
@@ -64,28 +65,32 @@ public class MainController {
     
     @FXML
     private void startBatch() throws InterruptedException{
-        while(process_queue.size() > 0){
-            if(working) continue;
-            System.out.println("New process running");
-            // delete first element from the queue to be processed
-            Process to_process = process_queue.remove();
-            
-            // get progress bar reference
-            ProgressBar process_progressbar = getProgressBar(String.valueOf(to_process.getId()));
+        // start new tread to avoid block main javafx thread
+        // to update the progress bar
+        new Thread(){
+            public void run() {
+                while(process_queue.size() > 0){
+                    System.out.println("New process running");
 
-            // create task (needed to use progress property to update the progress bar)
-            Task task = taskCreator(to_process.getProcess_time());
-            process_progressbar.progressProperty().unbind();
-            process_progressbar.progressProperty().bind(task.progressProperty());
+                    // delete first element from the queue to be processed
+                    Process to_process = process_queue.remove();
+                    // get progress bar reference
+                    ProgressBar process_progressbar = getProgressBar(String.valueOf(to_process.getId()));
 
-            // create the thread, and start the task 
-            // (if not will enter in a undertemined progress property, negative o not valid value)
-            // Thread dummy_task = new Thread(task);
-            // dummy_task.start();
-            working = true;
-            System.out.println("working...");
-            new Thread(task).start();
-        }
+                    for (double i = 0.0; i < to_process.getProcess_time(); i++){
+                        final double step = i + 1;
+                        Platform.runLater(() -> process_progressbar.setProgress( (double) step / to_process.getProcess_time() ));
+                        System.out.printf("Complete: %02.2f%n", step / to_process.getProcess_time() );
+                        
+                        try {
+                            Thread.sleep(1000); 
+                        } catch(InterruptedException ex) {
+                            Thread.currentThread().interrupt();
+                        }
+                    }
+                }
+            }
+        }.start();
     }
 
     private void startMultiProcess() {
@@ -123,7 +128,7 @@ public class MainController {
                     updateProgress(i+1, seconds);
                 }
                 System.out.println("finish update");
-                working = false;
+                // working = false;
                 System.out.println("No more working");
                 return true;
             }
