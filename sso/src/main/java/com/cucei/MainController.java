@@ -40,29 +40,6 @@ public class MainController {
         process_queue.add(process);
     }
     
-    private Process generateFakeProcess() {
-        // generate data fake
-        int max_time = 10;
-        int min_time = 1;
-        int id = process_queue.size() + 1;
-        String name = newProcessTextInput.getText();
-        int time = (int) (Math.random() * (max_time - min_time + 1) + min_time);
-        return new Process(id, name, time);
-    }
-
-    private void createNewProcessToProcess(String process_name, int process_id) {
-        Label process_name_label = new Label(process_name);
-        
-        ProgressBar process_progressbar = new ProgressBar(0.0); // value is form 0 to 1
-        process_progressbar.setPrefWidth(350.0);
-        process_progressbar.setId("progressbar" + String.valueOf(process_id));
-        
-        HBox hbox = new HBox(30, process_name_label, process_progressbar);
-        hbox.setId("hbox" + String.valueOf(process_id));
-        
-        processProcessingVBox.getChildren().add(hbox);
-    }
-    
     @FXML
     private void startBatch() throws InterruptedException{
         // start new tread to avoid block main javafx thread
@@ -93,6 +70,7 @@ public class MainController {
         }.start();
     }
 
+    @FXML
     private void startMultiProcess() {
         while(process_queue.size() > 0){
             // delete first element from the queue to be processed
@@ -113,10 +91,6 @@ public class MainController {
         }
     }
 
-    private ProgressBar getProgressBar(String index) {
-        return (ProgressBar) processProcessingVBox.lookup("#progressbar"+index);
-    }
-
     //Create a New Task
     private Task taskCreator(int seconds){
         return new Task() {
@@ -133,6 +107,33 @@ public class MainController {
                 return true;
             }
         };
+    }
+
+    private Process generateFakeProcess() {
+        // generate data fake
+        int max_time = 10;
+        int min_time = 1;
+        int id = process_queue.size() + 1;
+        String name = newProcessTextInput.getText();
+        int time = (int) (Math.random() * (max_time - min_time + 1) + min_time);
+        return new Process(id, name, time);
+    }
+
+    private void createNewProcessToProcess(String process_name, int process_id) {
+        Label process_name_label = new Label(process_name);
+        
+        ProgressBar process_progressbar = new ProgressBar(0.0); // value is form 0 to 1
+        process_progressbar.setPrefWidth(350.0);
+        process_progressbar.setId("progressbar" + String.valueOf(process_id));
+        
+        HBox hbox = new HBox(30, process_name_label, process_progressbar);
+        hbox.setId("hbox" + String.valueOf(process_id));
+        
+        processProcessingVBox.getChildren().add(hbox);
+    }
+
+    private ProgressBar getProgressBar(String index) {
+        return (ProgressBar) processProcessingVBox.lookup("#progressbar"+index);
     }
 
     private void clear() {
