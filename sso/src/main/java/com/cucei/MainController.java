@@ -6,12 +6,14 @@ import java.util.Random;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.TextAlignment;
 
 public class MainController {
     private static final LinkedList<Process> process_queue = new LinkedList<>();
@@ -32,7 +34,7 @@ public class MainController {
         clear();
         
         Process process = generateFakeProcess();
-        createNewProcessToProcess(process.getName(), process.getId());        
+        createNewProcessToProcess(process.getName(), process.getId(), process.getAcutalState());        
         
         // add porcess to the list view
         processListView.getItems().add(process.getName());
@@ -110,14 +112,26 @@ public class MainController {
         return new Process(id, name, time);
     }
 
-    private void createNewProcessToProcess(String processName, int processId) {
+    private void createNewProcessToProcess(String processName, int processId, String processState) {
         Label processNameLabel = new Label(processName);
         
         ProgressBar processProgressbar = new ProgressBar(0.0); // value is form 0 to 1
         processProgressbar.setPrefWidth(350.0);
         processProgressbar.setId("progressbar" + processId);
+        processProgressbar.setPrefWidth(280);
         
-        HBox hbox = new HBox(30, processNameLabel, processProgressbar);
+        Label processStateLabel = new Label(processState);
+        processStateLabel.setId("statelabel" + processId);
+
+        Button processPauseButton = new Button("Pausar");
+        processPauseButton.setTextAlignment(TextAlignment.CENTER);
+        processPauseButton.setDisable(true);
+        Button processResumeButton = new Button("Reanudar");
+        processResumeButton.setTextAlignment(TextAlignment.CENTER);
+        processResumeButton.setDisable(true);
+        // processPauseButton.setOnAction((arg0) -> );
+        
+        HBox hbox = new HBox(30, processNameLabel, processProgressbar, processStateLabel, processPauseButton, processResumeButton);
         hbox.setId("hbox" + processId);
         
         processProcessingVBox.getChildren().add(hbox);
