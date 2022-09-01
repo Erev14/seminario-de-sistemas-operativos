@@ -4,4 +4,5 @@ module com.cucei {
 
     opens com.cucei to javafx.fxml;
     exports com.cucei;
+    exports com.cucei.states;
 }
