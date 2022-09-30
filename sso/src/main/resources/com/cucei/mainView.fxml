@@ -27,6 +27,8 @@
          <children>
             <Button fx:id="batchButton" onAction="#startBatch" text="Lotes" />
             <Button fx:id="multiprogramingButton" onAction="#startMultiProcess" text="Multi Process" />
+            <Button fx:id="processWithStatesButton" onAction="#processWithStates" text="Multi process with States" />
+            <Button fx:id="clearButton" onAction="#clearUI" text="Clear" />
          </children>
       </HBox>
    </children>
