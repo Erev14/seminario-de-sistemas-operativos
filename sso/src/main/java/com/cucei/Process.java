@@ -11,6 +11,7 @@ public class Process {
     private ProcessStates acutalState;
     private State state;
     private boolean isTerminated;
+    private boolean isPaused;
 
     Process(int id, String name, int processTime) {
         this.id = id;
@@ -18,6 +19,7 @@ public class Process {
         this.processTime = processTime;
         this.acutalState = ProcessStates.NEW;
         this.isTerminated = false;
+        this.isPaused = false;
 
         this.state = new NewState(this);
     }
@@ -36,6 +38,14 @@ public class Process {
 
     public boolean isTerminated() {
       return isTerminated;
+    }
+
+    public boolean isPaused() {
+      return isPaused;
+    }
+
+    public void tooglePaused() {
+        this.isPaused = !this.isPaused;
     }
 
     public int getId() {
