@@ -13,7 +13,6 @@ import javafx.scene.control.ProgressBar;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.scene.text.TextAlignment;
 
 public class MainController {
     private static final LinkedList<Process> process_queue = new LinkedList<>();
@@ -57,7 +56,7 @@ public class MainController {
         endProcessing();
 
         Process process = generateFakeProcess();
-        createNewProcessToProcess(process.getName(), process.getId(), process.getAcutalState());        
+        createNewProcessToProcess(process);        
         
         // add porcess to the list view
         processListView.getItems().add(process.getName());
@@ -160,29 +159,33 @@ public class MainController {
         return new Process(id, name, time);
     }
 
-    private void createNewProcessToProcess(String processName, int processId, String processState) {
-        Label processNameLabel = new Label(processName);
+    private void createNewProcessToProcess(Process process) {
+        Label processNameLabel = new Label(process.getName());
         
         ProgressBar processProgressbar = new ProgressBar(0.0); // value is form 0 to 1
         processProgressbar.setPrefWidth(350.0);
-        processProgressbar.setId("progressbar" + processId);
+        processProgressbar.setId("progressbar" + process.getId());
         processProgressbar.setPrefWidth(280);
         
-        Label processStateLabel = new Label(processState);
-        processStateLabel.setId("statelabel" + processId);
-        
+        Label processStateLabel = new Label(process.getAcutalState());
+        processStateLabel.setId("statelabel" + process.getId());
 
-        // Button processPauseButton = new Button("Pausar");
-        // processPauseButton.setTextAlignment(TextAlignment.CENTER);
-        // processPauseButton.setDisable(true);
-        // Button processResumeButton = new Button("Reanudar");
-        // processResumeButton.setTextAlignment(TextAlignment.CENTER);
-        // processResumeButton.setDisable(true);
-        // processPauseButton.setOnAction((arg0) -> );
+        Button pauseToogleButton = new Button("Pausar");
+        pauseToogleButton.setId("Button" +  String.valueOf(process.getId()));
+        Button endPrcoessButton = new Button("Terminar");
+        pauseToogleButton.setOnAction((event) -> {
+            Platform.runLater(() -> {
+                if(process.isPaused()){
+                    pauseToogleButton.setText("Pausar");
+                }else{
+                    pauseToogleButton.setText("Continuar");
+                }
+                process.tooglePaused();
+            });
+        });
         
-        // HBox hbox = new HBox(30, processNameLabel, processProgressbar, processStateLabel, processPauseButton, processResumeButton);
-        HBox hbox = new HBox(30, processNameLabel, processProgressbar, processStateLabel);
-        hbox.setId("hbox" + processId);
+        HBox hbox = new HBox(30, processNameLabel, processProgressbar, pauseToogleButton, endPrcoessButton);
+        hbox.setId("hbox" + String.valueOf(process.getId()));
         
         processProcessingVBox.getChildren().add(hbox);
     }
