@@ -6,6 +6,7 @@ import java.util.Random;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.ProgressBar;
@@ -16,6 +17,12 @@ import javafx.scene.layout.VBox;
 public class MainController {
     private static final LinkedList<Process> process_queue = new LinkedList<>();
 
+    private int processCount;
+
+    private int processEnded;
+
+    private Object lock = new Object();
+    
     Random r = new Random();
 
     @FXML
@@ -26,27 +33,47 @@ public class MainController {
 
     @FXML
     private VBox processProcessingVBox;
+
+    @FXML
+    private Button addProcessButton;
+
+    @FXML
+    private Button batchButton;
+    
+    @FXML
+    private Button multiprogramingButton;
+    
+    @FXML
+    private Button processWithStatesButton;
+    
+    @FXML
+    private Button clearButton;
+
     @FXML
     private void addProcess() {
         // clear view list and process bars
         clear();
-        
+        endProcessing();
+
         Process process = generateFakeProcess();
-        createNewProcessToProcess(process.getName(), process.getId());        
+        createNewProcessToProcess(process);        
         
         // add porcess to the list view
         processListView.getItems().add(process.getName());
         // add porcess to the controller queue (the algoritms will work with this)
         process_queue.add(process);
+        newProcessTextInput.clear();
+        newProcessTextInput.requestFocus();
     }
     
     @FXML
     private void startBatch(){
         // start new tread to avoid block main javafx thread
         // to update the progress bar
-        new Thread(){
+        new Thread("Batch"){
             @Override
             public void run() {
+                startProcessing();
                 while(!process_queue.isEmpty()){
                     // delete first element from the queue to be processed
                     Process toProcess = process_queue.remove();
@@ -63,12 +90,14 @@ public class MainController {
                         }
                     }
                 }
+                endProcessing();
             }
         }.start();
     }
 
     @FXML
     private void startMultiProcess() {
+        startProcessing();
         while(!process_queue.isEmpty()){
             // delete first element from the queue to be processed
             Process toProcess = process_queue.remove();
@@ -77,25 +106,45 @@ public class MainController {
             ProgressBar processProgressbar = getProgressBar(String.valueOf(toProcess.getId()));
 
             // create task (needed to use progress property to update the progress bar)
-            Task task = taskCreator(toProcess.getProcessTime());
+            Task<Void> task = taskCreator(toProcess.getProcessTime());
             processProgressbar.progressProperty().unbind();
             processProgressbar.progressProperty().bind(task.progressProperty());
             // create the thread, and start the task 
             // (if not will enter in a undertemined progress property, negative o not valid value)
-            new Thread(task).start();
+            new Thread(task, "Task " + toProcess.getName() + "for " + toProcess.getProcessTime()).start();
         }
     }
 
+    @FXML
+    private void processWithStates(){
+        // for processProcessingVBox.getChildren() -> get hbox.getchildren.add("acutal State", "pausebuton", "terminatebuton")
+        // set onhandle pause -> change text to resume (set to undertermined progress property the progress bar)
+        // set onhandle terminatebutton to set progress bar as complete
+        // move process states
+        // ... check how to use wait/notify with javafx
+    }
+
+    @FXML
+    private void clearUI(){
+        clearAll();
+    }
+
     //Create a New Task
-    private Task taskCreator(int seconds){
-        return new Task() {
+    private Task<Void> taskCreator(int seconds){
+        return new Task<Void>() {
             @Override
-            protected Object call() throws Exception {
+            protected Void call() throws Exception {
                 for(int i=0; i<seconds;i++){
                     Thread.sleep(1000);
                     updateProgress(i+1, seconds);
                 }
-                return true;
+                synchronized(lock){
+                    processEnded++;
+                    if(processEnded == processCount){
+                        endProcessing();
+                    }
+                }
+                return null;
             }
         };
     }
@@ -110,15 +159,33 @@ public class MainController {
         return new Process(id, name, time);
     }
 
-    private void createNewProcessToProcess(String processName, int processId) {
-        Label processNameLabel = new Label(processName);
+    private void createNewProcessToProcess(Process process) {
+        Label processNameLabel = new Label(process.getName());
         
         ProgressBar processProgressbar = new ProgressBar(0.0); // value is form 0 to 1
         processProgressbar.setPrefWidth(350.0);
-        processProgressbar.setId("progressbar" + processId);
+        processProgressbar.setId("progressbar" + process.getId());
+        processProgressbar.setPrefWidth(280);
         
-        HBox hbox = new HBox(30, processNameLabel, processProgressbar);
-        hbox.setId("hbox" + processId);
+        Label processStateLabel = new Label(process.getAcutalState());
+        processStateLabel.setId("statelabel" + process.getId());
+
+        Button pauseToogleButton = new Button("Pausar");
+        pauseToogleButton.setId("Button" +  String.valueOf(process.getId()));
+        Button endPrcoessButton = new Button("Terminar");
+        pauseToogleButton.setOnAction((event) -> {
+            Platform.runLater(() -> {
+                if(process.isPaused()){
+                    pauseToogleButton.setText("Pausar");
+                }else{
+                    pauseToogleButton.setText("Continuar");
+                }
+                process.tooglePaused();
+            });
+        });
+        
+        HBox hbox = new HBox(30, processNameLabel, processProgressbar, pauseToogleButton, endPrcoessButton);
+        hbox.setId("hbox" + String.valueOf(process.getId()));
         
         processProcessingVBox.getChildren().add(hbox);
     }
@@ -129,8 +196,31 @@ public class MainController {
 
     private void clear() {
         if(process_queue.isEmpty()){
-            processListView.getItems().clear();
-            processProcessingVBox.getChildren().clear();
+            clearAll();
         }
+    }
+
+    private void clearAll(){
+        processListView.getItems().clear();
+        processProcessingVBox.getChildren().clear();
+        processCount = 0;
+    }
+
+    private void startProcessing(){
+        processCount = process_queue.size();
+        addProcessButton.setDisable(true);
+        batchButton.setDisable(true);
+        multiprogramingButton.setDisable(true);
+        processWithStatesButton.setDisable(true);
+        clearButton.setDisable(true);
+    }
+
+    private void endProcessing(){
+        processCount = 0;
+        addProcessButton.setDisable(false);
+        batchButton.setDisable(false);
+        multiprogramingButton.setDisable(false);
+        processWithStatesButton.setDisable(false);
+        clearButton.setDisable(false);
     }
 }
