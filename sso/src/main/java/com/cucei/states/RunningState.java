@@ -1,6 +1,6 @@
 package com.cucei.states;
 
-import com.cucei.Process;
+import com.cucei.resources.Process;
 
 public class RunningState extends State{
 

@@ -1,7 +1,6 @@
 package com.cucei;
 
 import java.util.LinkedList;
-import java.util.Random;
 
 import javafx.application.Platform;
 import javafx.concurrent.Task;
@@ -13,6 +12,7 @@ import javafx.scene.control.ProgressBar;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import com.cucei.resources.Process;
 
 public class MainController {
     private static final LinkedList<Process> process_queue = new LinkedList<>();
@@ -22,8 +22,6 @@ public class MainController {
     private int processEnded;
 
     private Object lock = new Object();
-    
-    Random r = new Random();
 
     @FXML
     private TextField newProcessTextInput;
@@ -55,8 +53,8 @@ public class MainController {
         clear();
         endProcessing();
 
-        Process process = generateFakeProcess();
-        createNewProcessToProcess(process);        
+        Process process = new Process(process_queue.size(), newProcessTextInput.getText());
+        createNewProcessToProcess(process);
         
         // add porcess to the list view
         processListView.getItems().add(process.getName());
@@ -149,16 +147,6 @@ public class MainController {
         };
     }
 
-    private Process generateFakeProcess() {
-        // generate data fake
-        int maxTime = 10;
-        int minTime = 1;
-        int id = process_queue.size() + 1;
-        String name = newProcessTextInput.getText();
-        int time = minTime + r.nextInt(maxTime);
-        return new Process(id, name, time);
-    }
-
     private void createNewProcessToProcess(Process process) {
         Label processNameLabel = new Label(process.getName());
         
@@ -176,6 +164,7 @@ public class MainController {
         pauseToogleButton.setOnAction((event) -> {
             Platform.runLater(() -> {
                 if(process.isPaused()){
+                    // process.pause();
                     pauseToogleButton.setText("Pausar");
                 }else{
                     pauseToogleButton.setText("Continuar");
