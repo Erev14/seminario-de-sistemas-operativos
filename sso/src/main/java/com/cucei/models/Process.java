@@ -1,4 +1,4 @@
-package com.cucei.resources;
+package com.cucei.models;
 
 import java.util.Random;
 import com.cucei.states.NewState;

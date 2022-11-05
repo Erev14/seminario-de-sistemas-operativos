@@ -1,6 +1,6 @@
-package com.cucei;
+package com.cucei.runnables;
 
-import com.cucei.resources.Process;
+import com.cucei.models.Process;
 public class ProcessRunnable implements Runnable{
     private int id;
     private Process process;
@@ -33,12 +33,7 @@ public class ProcessRunnable implements Runnable{
     public void resume() {
         this.process.getState().onResume();
         synchronized(lock){
-            try {
-                notify();
-            } catch (InterruptedException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
+            notify();
         }
     }
     

@@ -1,6 +1,6 @@
 package com.cucei.states;
 
-import com.cucei.resources.Process;
+import com.cucei.models.Process;
 
 public class NewState extends State {
 
