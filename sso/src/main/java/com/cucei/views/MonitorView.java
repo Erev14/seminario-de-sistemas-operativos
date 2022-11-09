@@ -12,31 +12,23 @@ import javafx.scene.layout.VBox;
 
 import com.cucei.models.Process;
 
-public class MonitorView {
-    @FXML
+public class MonitorView {    
     private TextField newProcessTextInput;
-
-    @FXML
+    
     private ListView<String> processListView = new ListView<>();
 
-    @FXML
     private VBox processProcessingVBox;
-
-    @FXML
-    private Button addProcessButton;
-
-    @FXML
-    private Button batchButton;
     
-    @FXML
+    private Button addProcessButton;
+    
+    private Button batchButton;
+        
     private Button multiprogramingButton;
     
-    @FXML
     private Button processWithStatesButton;
     
-    @FXML
     private Button clearButton;
-    
+
     public MonitorView(){
 
     }
@@ -97,5 +89,33 @@ public class MonitorView {
     public void clear(){
         processListView.getItems().clear();
         processProcessingVBox.getChildren().clear();
+    }
+
+    public void setNewProcessTextInput(TextField newProcessTextInput){
+        this.newProcessTextInput = newProcessTextInput;
+    }
+
+    public void setProcessProcessingVBox(VBox processProcessingVBox){
+        this.processProcessingVBox = processProcessingVBox;
+    }
+    
+    public void setAddProcessButton(Button addProcessButton){
+        this.addProcessButton = addProcessButton;
+    }
+    
+    public void setBatchButton(Button batchButton){
+        this.batchButton = batchButton;
+    }
+        
+    public void setMultiprogramingButton(Button multiprogramingButton){
+        this.multiprogramingButton = multiprogramingButton;
+    }
+    
+    public void setProcessWithStatesButton(Button processWithStatesButton){
+        this.processWithStatesButton = processWithStatesButton;
+    }
+    
+    public void setClearButton(Button clearButton){
+        this.clearButton = clearButton;
     }
 }
